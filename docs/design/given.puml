@@ -1,0 +1,314 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "domain.game" {
+	enum GameType {
+		NONE
+		EXPLODING_KITTENS
+		STREAKING_KITTENS
+		IMPLODING_KITTENS
+	}
+
+	enum CardType {
+		NOPE
+		DEFUSE
+		ATTACK
+		SHUFFLE
+		SKIP
+		SEE_THE_FUTURE
+		CAT_ONE
+		CAT_TWO
+		CAT_THREE
+		CAT_FOUR
+		EXPLODING_KITTEN
+		STREAKING_KITTEN
+		SWAP_TOP_AND_BOTTOM
+		GARBAGE_COLLECTION
+		CURSE_OF_THE_CAT_BUTT
+		ALTER_THE_FUTURE
+		CATOMIC_BOMB
+		SUPER_SKIP
+		MARK
+		IMPLODING_KITTEN
+		REVERSE
+		FERAL_CAT
+		TARGETED_ATTACK
+		DRAW_FROM_THE_BOTTOM
+		- gameType : GameType
+		- CardType(gameType : GameType)
+	}
+
+	class Instantiator {
+		+ createCard(cardType : CardType) : Card
+		+ createRandom() : Random
+		+ createCardList() : ArrayList<Card>
+	}
+
+	class Card {
+		- cardType : CardType
+		- isMarked : boolean
+		- isFacedUp : boolean
+		+ Card(cardType : CardType)
+		+ getCardType() : CardType
+		+ markCard() : void
+		+ checkIfMarked() : boolean
+		+ setFacedUp() : void
+		+ checkIfFacedUp() : boolean
+	}
+
+	class Deck {
+		- deck : List<Card>
+		- rand : Random
+		- gameType : GameType
+		- numberOfPlayers : int
+		- maxDeckSize : int
+		- instantiator : Instantiator
+		-{static} DECK_FULL_EXCEPTION : String
+		-{static} DRAW_FROM_EMPTY_DECK_EXCEPTION : String
+		-{static} NEGATIVE_INDEX_EXCEPTION : String
+		-{static} INDEX_GREATER_THAN_DECK_SIZE_EXCEPTION : String
+		-{static} MISMATCH_ORDER_SIZE_EXCEPTION : String
+		-{static} INDEX_OUT_OF_RANGE_EXCEPTION : String
+		+ Deck(deck : List<Card>, rand : Random, gameType : GameType, numberOfPlayers : int, maxDeckSize : int, instantiator : Instantiator)
+		+ getDeckSize() : int
+		+ getCardAtIndex(index : int) : Card
+		+ initializeDeck() : void
+		+ shuffleDeck() : void
+		+ insertCard(cardType : CardType, numberOfCards : int, bottom : boolean) : void
+		+ drawCard() : Card
+		+ drawCardFromBottom() : Card
+		+ setNumberOfPlayers(numberOfPlayers : int) : void
+		+ chooseGameType(gameType : GameType) : void
+		+ removeBombs() : int
+		+ insertExplodingKittenAtIndex(indexToInsert : int) : void
+		+ insertImplodingKittenAtIndex(indexToInsert : int, card : Card) : void
+		# getCardTypeAtIndex(index : int) : CardType
+		+ reorderDeckCards(newOrderIndices : int[], cardsToReorder : List<Card>) : void
+		- addedOutOfBounds(numberOfCards : int) : boolean
+		- checkIfExplodingKitten(index : int) : boolean
+		- checkIfIndexOutOfRange(index : int) : boolean
+	}
+
+	class Player {
+		- playerID : int
+		- hand : List<Card>
+		- isDead : boolean
+		- rand : Random
+		- isCursed : boolean
+		-{static} MUST_ADD_DEFUSE_CARD_EXCEPTION : String
+		-{static} INVALID_INDEX_EXCEPTION : String
+		-{static} NO_CARD_FOUND_EXCEPTION : String
+		+ Player(playerID : int, instantiator : Instantiator)
+		+ getPlayerID() : int
+		+ addDefuse(defuse : Card) : void
+		+ addCardToHand(card : Card) : void
+		+ hasCard(cardType : CardType) : boolean
+		+ getHandSize() : int
+		+ getCardAt(index : int) : Card
+		+ getIndexOfCard(cardType : CardType) : int
+		+ removeCardFromHand(index : int) : CardType
+		+ shuffleHand() : void
+		+ checkNumberOfCardsInHand(cardType : CardType) : int
+		+ getIsDead() : boolean
+		+ setIsDead() : void
+		+ getIsCursed() : boolean
+		+ setCursed(isCursed : boolean) : void
+	}
+
+	class Game {
+		- numberOfPlayers : int
+		- gameType : GameType
+		- deck : Deck
+		- players : Player[]
+		- rand : Random
+		- currentPlayerTurn : int
+		- currentPlayerNumberOfTurns : int
+		- isReversed : boolean
+		- attackQueue : List<Integer>
+		- attackCounter : int
+		- numberOfAttacks : int
+		- turnTracker : int[]
+		- attacked : boolean
+		-{static} PLAYER_HAND_EMPTY_EXCEPTION : String
+		-{static} INVALID_PLAYER_INDEX_EXCEPTION : String
+		-{static} INVALID_GAME_TYPE_EXCEPTION : String
+		-{static} NO_PLAYERS_EXCEPTION : String
+		-{static} OUT_OF_BOUNDS_PLAYER_INDEX_EXCEPTION : String
+		-{static} PLAYER_DEAD_EXCEPTION : String
+		-{static} CARD_INDEX_OUT_OF_BOUNDS_EXCEPTION : String
+		-{static} CARD_TYPE_NOT_FOUND_EXCEPTION : String
+		-{static} INVALID_NUMBER_OF_PLAYERS_EXCEPTION : String
+		-{static} NUMBER_OF_TURNS_OUT_OF_BOUNDS_EXCEPTION : String
+		+ Game(numberOfPlayers : int, gameType : GameType, deck : Deck, players : Player[], rand : Random, attackQueue : List<Integer>, turnTracker : int[])
+		+ swapTopAndBottom() : void
+		+ stealRandomCard(playerToStealFrom : int) : Card
+		+ stealTypeCard(cardType : CardType, playerToStealFrom : int) : void
+		+ startAttackPhase() : void
+		+ playAttack() : void
+		+ playTargetedAttack(attackedPlayerIndex : int) : void
+		+ playExplodingKitten(playerIndex : int) : boolean
+		+ playImplodingKitten() : void
+		+ playDefuse(idxToInsertExplodingKitten : int, playerIndex : int) : void
+		+ drawFromBottom() : Card
+		+ playCatomicBomb() : void
+		+ setNumberOfPlayers(numberOfPlayers : int) : void
+		+ playReverse() : void
+		+ retrieveGameMode(gameType : GameType) : void
+		+ selectRandomPlayer() : Player
+		+ playShuffle(numberOfShuffles : int) : void
+		+ playSkip(superSkip : boolean) : int
+		+ playGarbageCollection(cardToDiscard : CardType) : void
+		+ getDeck() : Deck
+		+ incrementPlayerTurn() : void
+		+ incrementAttackCounter() : void
+		+ setAttackCounter(playerIndex : int) : void
+		~ getGameTypeForTesting() : GameType
+		+ getGameType() : GameType
+		+ getPlayerAtIndex(playerIndex : int) : Player
+		+ addAttacks() : void
+		+ playMark(playerIndex : int, cardIndex : int) : void
+		+ addAttackQueue(attack : int) : void
+		+ removeAttackQueue() : int
+		+ isAttackQueueEmpty() : boolean
+		+ setPlayerNumberOfTurns() : void
+		+ getPlayerTurn() : int
+		+ getNumberOfPlayers() : int
+		+ checkNumberOfAlivePlayers() : int
+		+ setCurrentPlayerNumberOfTurns(numberOfTurns : int) : void
+		+ decrementNumberOfTurns() : void
+		+ getNumberOfTurns() : int
+		+ getDeckSize() : int
+		+ drawCard() : Card
+		+ getCardAtIndex(cardIndex : int) : Card
+		+ removeCardFromHand(playerIndex : int, cardType : CardType) : void
+		+ getIndexOfCardFromHand(playerIndex : int, cardType : CardType) : int
+		+ addCardToHand(card : Card) : void
+		+ checkIfPlayerDead(playerIndex : int) : boolean
+		+ checkIfPlayerHasCard(playerIndex : int, cardType : CardType) : boolean
+		+ getCardType(playerIndex : int, cardIndex : int) : CardType
+		+ getHandSize(playerIndex : int) : int
+		+ getDeckCardType(deckIndex : int) : CardType
+		+ getIsReversed() : boolean
+		# setCurrentPlayerTurn(turn : int) : void
+		- matchingGameType(gameType : GameType) : boolean
+		- checkCardOutOfBoundsIndexed(cardIndex : int, playerIndex : int) : boolean
+		- checkUserOutOfBounds(userIndex : int) : boolean
+		- checkDeckHasOneCardOrLess() : boolean
+		- checkPlayerHandEmpty(player : Player) : boolean
+		- checkInvalidNumberOfPlayers(numPlayers : int) : boolean
+		- hasZeroPlayers() : boolean
+		- checkIfNumberOfTurnsOutOfBounds() : boolean
+		- checkIfNumberOfTurnsIsZero() : boolean
+		+ setTurnToTargetedIndexIfAttackOccurred() : void
+		+ getTurnCountOfPlayer(playerIndex : int) : int
+		+ getAttacked() : boolean
+		+ getAttackCounter() : int
+		+ getNumberOfAttacks() : int
+		~ setNumberOfAttacks(numberOfAttacks : int) : void
+		~ setAttacked(attacked : boolean) : void
+	}
+}
+
+package "ui" {
+	class GameUI {
+		- game : Game
+		- messages : ResourceBundle
+		+ GameUI(game : Game)
+		+ chooseLanguage() : void
+		+ chooseGame() : void
+		+ chooseNumberOfPlayers() : void
+		+ startTurn() : void
+		+ endGame() : void
+		+ checkIfGameOver() : boolean
+		- checkValidPlayerIndexInput() : int
+		- startAttackFollowUp(targeted : boolean) : void
+		- swapTopAndBottom() : void
+		- playAttack(targeted : boolean) : void
+		- playGarbageCollection() : void
+		- printPlayerTurn() : void
+		- playedCard() : int
+		- playSpecialCombo() : int
+		- playNope(playerIndex : int) : void
+		- checkAllPlayersForNope(playerIndex : int) : boolean
+		- playExplodingKitten(playerIndex : int) : boolean
+		- endTurn() : boolean
+		- checkIfTheyEndTurn() : boolean
+		- playCurseOfTheCatButt() : void
+		- playSpecialComboTwoCards(cardType : CardType) : void
+		- drawFromTheBottom() : void
+		- playMark() : void
+		- playCatomicBomb() : void
+		- playReverse() : void
+		- playSpecialComboThreeCards(cardType : CardType) : void
+		- playSeeTheFuture() : void
+		- playShuffle() : void
+		- playSkip(superSkip : boolean) : void
+		- playAlterTheFuture() : void
+		- checkIfCatCard(cardType : CardType) : boolean
+		- checkNumberOfFeralCats(playerIndex : int) : int
+		- promptCursedMessage() : void
+		- checkCardIfInvalid(card : Card) : boolean
+		- playImplodingKitten(card : Card) : boolean
+		- checkUserWithinBounds(userIndex : int) : boolean
+		- checkUserOutOfBounds(userIndex : int) : boolean
+		- checkIfPlayerIsAlive(userIndex : int) : boolean
+		- hasCard(userIndex : int, cardType : CardType) : boolean
+		- hasCardDirect(player : Player, cardType : CardType) : boolean
+		- checkCardWithinBounds(cardIndex : int, player : Player) : boolean
+		- checkCardWithinBoundsIndexed(cardIndex : int, playerIndex : int) : boolean
+		- checkMatchingCardType(cardType : CardType, cardTypeTwo : CardType) : boolean
+		- checkIfPlayerIsCursed(player : Player) : boolean
+		- checkReversed() : boolean
+		- getHandSize(playerIndex : int) : int
+		- checkIfCardMarked(playerIndex : int, cardIndex : int) : boolean
+		- getNumberOfPlayers() : int
+		- checkExplodingKitten(playerIndex : int) : boolean
+		- checkIfNumberOfTurnsGreaterThanZero() : boolean
+		- checkIfNumberOfTurnsIsZero() : boolean
+		- checkIfCurrentPlayerTurn(playerIndex : int) : boolean
+		- getDeckSize() : int
+		- matchingGameType(gameType : GameType) : boolean
+		- checkFeralCat(numberOfFeralCatsToPlay : int, numberOfFeralCats : int, numberOfCatType : int, threshold : int) : boolean
+		- checkIfDifferentCardType(cardType : CardType, cardTypeTwo : CardType) : boolean
+		- checkAllPlayersNope() : boolean
+		- checkNumberOfCards(player : Player, cardType : CardType, threshold : int) : boolean
+		- getLocalizedCardType(cardType : CardType) : String
+		- checkNegativeIndexDeck(indexToInsert : int) : boolean
+		- checkIfGreaterThanMaxIndexDeck(indexToInsert : int) : boolean
+	}
+
+	class Main {
+		+ {static} main(args : String[]) : void
+	}
+}
+
+Card --> CardType
+CardType --> GameType
+Deck --> Card
+Deck ..> CardType
+Deck --> GameType
+Deck --> Instantiator
+Player --> Card
+Player ..> CardType
+Player ..> Instantiator
+Instantiator ..> Card
+Instantiator ..> CardType
+Game --> Deck
+Game --> Player
+Game --> GameType
+Game ..> Card
+Game ..> CardType
+GameUI --> Game
+GameUI ..> Player
+GameUI ..> Card
+GameUI ..> CardType
+GameUI ..> GameType
+Main ..> GameUI
+Main ..> Game
+Main ..> Deck
+Main ..> Player
+Main ..> Card
+Main ..> CardType
+Main ..> GameType
+Main ..> Instantiator
+@enduml

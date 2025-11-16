@@ -35,9 +35,9 @@ public class Game {
 			"Number of turns must be between 1 and 6.";
 
 	public Game (int numberOfPlayers, GameType gameType,
-                 Deck deck, domain.game.Player[] players, Random rand,
-                 List<Integer> attackQueue,
-                 int[] turnTracker) {
+				Deck deck, domain.game.Player[] players, Random rand,
+				List<Integer> attackQueue,
+				int[] turnTracker) {
 		this.numberOfPlayers = numberOfPlayers;
 		this.gameType = gameType;
 		this.deck = deck;
