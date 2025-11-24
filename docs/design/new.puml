@@ -1,0 +1,225 @@
+@startuml
+
+
+package "game.core" {
+  class GameEngine {
+    - state : GameState
+    - resolver : CardResolver
+    - factory : CardFactory
+    - reactionWindow : ReactionWindow
+    + startGame() : void
+    + playCard(cardId : UUID, targets : List<Player>) : void
+    + draw() : Card
+    + endTurn() : void
+  }
+
+  class GameState {
+    - deck : Deck
+    - discardPile : DiscardPile
+    - players : List<Player>
+    - turnManager : TurnManager
+    + getCurrentPlayer() : Player
+    + getAlivePlayers() : List<Player>
+  }
+
+  class TurnManager {
+    - currentIndex : int
+    - direction : int
+    - pendingTurns : int
+    - attackQueue : Queue<Integer>
+    + nextTurn() : void
+    + addTurns(count : int) : void
+    + reverse() : void
+    + consumeTurn() : void
+  }
+
+  class CardResolver {
+    - reactionWindow : ReactionWindow
+    - defuseHandler : DefuseHandler
+    + resolvePlay(call : EffectCall) : void
+    + onDraw(card : Card, ctx : PlayContext) : void
+  }
+}
+
+package "game.state" {
+  abstract class CardPile {
+    - cards : List<Card>
+    + size() : int
+    + add(card : Card) : void
+    + removeAt(index : int) : Card
+  }
+
+  class Deck extends CardPile {
+    - shuffler : DeckShuffler
+    + drawTop() : Card
+    + drawBottom() : Card
+    + insert(card : Card, index : int) : void
+    + shuffle() : void
+  }
+
+  class DiscardPile extends CardPile {
+    + top() : Card
+  }
+
+  class Hand extends CardPile {
+    + has(type : CardType) : boolean
+    + find(type : CardType) : int
+  }
+
+  interface DeckShuffler {
+    + shuffle(cards : List<Card>) : void
+  }
+
+  class RandomDeckShuffler implements DeckShuffler
+
+  class Player {
+    - id : int
+    - hand : Hand
+    - alive : boolean
+    + draw(deck : Deck) : Card
+    + play(card : Card, targets : List<Player>, resolver : CardResolver) : void
+    + discard(card : Card, discardPile : DiscardPile) : void
+    + kill() : void
+  }
+}
+
+package "game.cards" {
+  class Card {
+    - id : UUID
+    - type : CardType
+    - effect : CardEffect
+    - faceUp : boolean
+    + play(ctx : PlayContext) : void
+    + flip(faceUp : boolean) : void
+  }
+
+  interface CardEffect {
+    + canPlay(ctx : PlayContext) : boolean
+    + resolve(ctx : PlayContext) : void
+    + isNoppable() : boolean
+  }
+
+  interface DrawnTrigger {
+    + onDrawn(ctx : PlayContext) : void
+  }
+
+  class ExplodingKittenEffect implements CardEffect, DrawnTrigger {
+    - policy : ExplosionPolicy
+    + resolve(ctx : PlayContext) : void
+    + onDrawn(ctx : PlayContext) : void
+  }
+
+  class DefuseEffect implements CardEffect {
+    - insertionPolicy : InsertionPolicy
+    + resolve(ctx : PlayContext) : void
+  }
+
+  class NopeEffect implements CardEffect {
+    + resolve(ctx : PlayContext) : void
+  }
+
+  class ShuffleEffect implements CardEffect {
+    - shuffler : DeckShuffler
+    + resolve(ctx : PlayContext) : void
+  }
+
+  class AttackEffect implements CardEffect {
+    + resolve(ctx : PlayContext) : void
+  }
+
+  class CardFactory {
+    - registry : Map<CardType, Supplier<Card>>
+    + create(type : CardType) : Card
+  }
+
+  enum CardType {
+    EXPLODING_KITTEN
+    NOPE
+    SHUFFLE
+    DEFUSE
+    ATTACK
+    SKIP
+    SEE_THE_FUTURE
+    CAT
+  }
+}
+
+package "game.reactions" {
+  class ReactionWindow {
+    - pending : Stack<EffectCall>
+    + open(call : EffectCall) : ResolutionResult
+    + addNope(player : Player) : void
+    + resolve() : void
+  }
+
+  class EffectCall {
+    - effect : CardEffect
+    - ctx : PlayContext
+    - status : ResolutionStatus
+  }
+
+  class DefuseHandler {
+    + tryDefuse(explosionCtx : PlayContext) : boolean
+  }
+
+  class ExplosionPolicy {
+    + kill(player : Player) : void
+    + returnToDeck(deck : Deck, card : Card, index : int) : void
+  }
+
+  class InsertionPolicy {
+    + chooseIndex(deck : Deck, rand : Random) : int
+  }
+}
+
+class PlayContext {
+  - state : GameState
+  - actor : Player
+  - targets : List<Player>
+  - sourceCard : Card
+}
+
+GameEngine --> GameState
+GameEngine --> CardResolver
+GameEngine --> CardFactory
+GameEngine --> ReactionWindow
+GameState --> Deck
+GameState --> DiscardPile
+GameState --> Player
+GameState --> TurnManager
+TurnManager ..> Player
+CardResolver --> ReactionWindow
+CardResolver --> DefuseHandler
+CardResolver ..> EffectCall
+CardResolver ..> PlayContext
+ReactionWindow --> EffectCall
+ReactionWindow --> Player
+EffectCall --> CardEffect
+EffectCall --> PlayContext
+Player --> Hand
+Player --> Card
+Player ..> CardResolver
+Player ..> Deck
+Card --> CardEffect
+Card --> CardType
+Deck --|> CardPile
+DiscardPile --|> CardPile
+Hand --|> CardPile
+RandomDeckShuffler ..|> DeckShuffler
+CardEffect <|.. ExplodingKittenEffect
+CardEffect <|.. DefuseEffect
+CardEffect <|.. NopeEffect
+CardEffect <|.. ShuffleEffect
+CardEffect <|.. AttackEffect
+DrawnTrigger <|.. ExplodingKittenEffect
+DefuseEffect --> InsertionPolicy
+ExplodingKittenEffect --> ExplosionPolicy
+ShuffleEffect --> DeckShuffler
+Deck --> DeckShuffler
+CardFactory ..> Card
+InsertionPolicy ..> Deck
+ExplosionPolicy ..> Deck
+PlayContext --> GameState
+PlayContext --> Player
+PlayContext --> Card
+@enduml
