@@ -21,7 +21,7 @@ package "domain.game" {
 		CAT_THREE
 		CAT_FOUR
 		EXPLODING_KITTEN
-		STREAKING_KITTEN
+		STREAKING_KITTEN                        
 		SWAP_TOP_AND_BOTTOM
 		GARBAGE_COLLECTION
 		CURSE_OF_THE_CAT_BUTT
@@ -35,13 +35,13 @@ package "domain.game" {
 		TARGETED_ATTACK
 		DRAW_FROM_THE_BOTTOM
 		- gameType : GameType
-		- CardType(gameType : GameType)
+		- CardType(gameType : GameType) 
 	}
 
 	class Instantiator {
 		+ createCard(cardType : CardType) : Card
-		+ createRandom() : Random
-		+ createCardList() : ArrayList<Card>
+		+ createRandom() : Random 
+		+ createCardList() : ArrayList<Card>         
 	}
 
 	class Card {

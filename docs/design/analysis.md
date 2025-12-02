@@ -1,0 +1,3 @@
+# Analysis of change in design
+
+- We want to break the card rules into pluggable effects, so we can add new card with specific use effect and draw effect (like the exploding kitten). It demonstrate the SRP, the current GameUI module take the responsiblity of card effect and define the card behavior, we want to separate them out. To do that, we add CardEffect and DrawTrigger interface for each card use effect and draw effect. 
