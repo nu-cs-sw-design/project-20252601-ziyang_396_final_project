@@ -1,0 +1,327 @@
+@startuml Card Refactoring Design
+
+title Card System Refactoring - Strategy and Decorator Patterns
+
+package "Domain Layer" {
+    
+    class Card {
+        - cardType: CardType
+        - isMarked: boolean
+        - isFacedUp: boolean
+        - useEffect: CardEffect
+        - drawTrigger: DrawTrigger
+        + Card(cardType: CardType, useEffect: CardEffect, drawTrigger: DrawTrigger)
+        + getCardType(): CardType
+        + executeUseEffect(context: EffectContext): EffectResult
+        + executeDrawTrigger(context: EffectContext): DrawResult
+        + markCard(): void
+        + setFacedUp(): void
+        + checkIfMarked(): boolean
+        + checkIfFacedUp(): boolean
+    }
+    
+    enum CardType {
+        NOPE
+        DEFUSE
+        ATTACK
+        SHUFFLE
+        SKIP
+        SEE_THE_FUTURE
+        EXPLODING_KITTEN
+        STREAKING_KITTEN
+        IMPLODING_KITTEN
+        REVERSE
+        CATOMIC_BOMB
+    }
+    
+    class EffectContext {
+        - game: Game
+        - currentPlayer: Player
+        - targetPlayer: Player
+        - userInput: UserInputProvider
+        - deck: Deck
+        + EffectContext(game: Game, currentPlayer: Player, userInput: UserInputProvider)
+        + setTargetPlayer(player: Player): void
+        + getGame(): Game
+        + getCurrentPlayer(): Player
+        + getDeck(): Deck
+        + getUserInput(): UserInputProvider
+    }
+    
+    class EffectResult {
+        - success: boolean
+        - endsTurn: boolean
+        - message: String
+        - cancelled: boolean
+        + isSuccess(): boolean
+        + shouldEndTurn(): boolean
+        + getMessage(): String
+        + isCancelled(): boolean
+    }
+    
+    class DrawResult {
+        - survived: boolean
+        - message: String
+        - shouldKeepCard: boolean
+        + didSurvive(): boolean
+        + getMessage(): String
+        + shouldKeepCard(): boolean
+    }
+}
+
+package "Card Effect Strategies" {
+    
+    interface CardEffect {
+        + execute(context: EffectContext): EffectResult
+        + canExecute(context: EffectContext): boolean
+    }
+    
+    interface DrawTrigger {
+        + onDraw(context: EffectContext): DrawResult
+    }
+    
+    abstract class AbstractCardEffect {
+        # validateContext(context: EffectContext): boolean
+        # createResult(success: boolean, endsTurn: boolean, message: String): EffectResult
+        + execute(context: EffectContext): EffectResult
+        + canExecute(context: EffectContext): boolean
+    }
+    
+    class ShuffleEffect {
+        - shuffleStrategy: ShuffleStrategy
+        + ShuffleEffect(shuffleStrategy: ShuffleStrategy)
+        + execute(context: EffectContext): EffectResult
+        + canExecute(context: EffectContext): boolean
+    }
+    
+    class SeeTheFutureEffect {
+        - cardsToReveal: int
+        + SeeTheFutureEffect(cardsToReveal: int)
+        + execute(context: EffectContext): EffectResult
+        + canExecute(context: EffectContext): boolean
+    }
+    
+    class AlterTheFutureEffect {
+        - cardsToAlter: int
+        + AlterTheFutureEffect(cardsToAlter: int)
+        + execute(context: EffectContext): EffectResult
+        + canExecute(context: EffectContext): boolean
+    }
+    
+    class AttackEffect {
+        - targeted: boolean
+        + AttackEffect(targeted: boolean)
+        + execute(context: EffectContext): EffectResult
+        + canExecute(context: EffectContext): boolean
+    }
+    
+    class SkipEffect {
+        - superSkip: boolean
+        + SkipEffect(superSkip: boolean)
+        + execute(context: EffectContext): EffectResult
+        + canExecute(context: EffectContext): boolean
+    }
+    
+    class ReverseEffect {
+        + execute(context: EffectContext): EffectResult
+        + canExecute(context: EffectContext): boolean
+    }
+    
+    class CatomicBombEffect {
+        + execute(context: EffectContext): EffectResult
+        + canExecute(context: EffectContext): boolean
+    }
+    
+    class NoEffect {
+        + execute(context: EffectContext): EffectResult
+        + canExecute(context: EffectContext): boolean
+    }
+    
+    class NOPEInterceptor {
+        - wrappedEffect: CardEffect
+        + NOPEInterceptor(wrappedEffect: CardEffect)
+        + execute(context: EffectContext): EffectResult
+        + canExecute(context: EffectContext): boolean
+        - shouldCancelDueToNOPE(context: EffectContext): boolean
+    }
+}
+
+package "Draw Triggers" {
+    
+    class ExplodingKittenTrigger {
+        + onDraw(context: EffectContext): DrawResult
+    }
+    
+    class ImplodingKittenTrigger {
+        + onDraw(context: EffectContext): DrawResult
+    }
+    
+    class NormalDrawTrigger {
+        + onDraw(context: EffectContext): DrawResult
+    }
+    
+    class StreakingKittenTrigger {
+        + onDraw(context: EffectContext): DrawResult
+    }
+}
+
+package "Shuffle Strategies" {
+    
+    interface ShuffleStrategy {
+        + shuffle(deck: List<Card>, random: Random): void
+    }
+    
+    class FisherYatesShuffle {
+        + shuffle(deck: List<Card>, random: Random): void
+    }
+    
+    class RiffleShuffle {
+        + shuffle(deck: List<Card>, random: Random): void
+    }
+    
+    class PileShuffle {
+        - numberOfPiles: int
+        + PileShuffle(numberOfPiles: int)
+        + shuffle(deck: List<Card>, random: Random): void
+    }
+}
+
+package "Combo System" {
+    
+    interface ComboEffect {
+        + execute(context: EffectContext): EffectResult
+        + getRequiredCardCount(): int
+        + acceptsFeralCat(): boolean
+    }
+    
+    class TwoOfAKindCombo {
+        + execute(context: EffectContext): EffectResult
+        + getRequiredCardCount(): int
+        + acceptsFeralCat(): boolean
+    }
+    
+    class ThreeOfAKindCombo {
+        + execute(context: EffectContext): EffectResult
+        + getRequiredCardCount(): int
+        + acceptsFeralCat(): boolean
+    }
+    
+    class ComboValidator {
+        + validateCombo(player: Player, cardType: CardType, count: int, feralCats: int): boolean
+        + removeCardsForCombo(player: Player, cardType: CardType, count: int, feralCats: int): void
+    }
+}
+
+package "Factory Pattern" {
+    
+    class CardEffectFactory {
+        - effectRegistry: Map<CardType, CardEffect>
+        - drawTriggerRegistry: Map<CardType, DrawTrigger>
+        - defaultShuffleStrategy: ShuffleStrategy
+        + CardEffectFactory()
+        + createCardEffect(cardType: CardType): CardEffect
+        + createDrawTrigger(cardType: CardType): DrawTrigger
+        + canBeNOPEd(cardType: CardType): boolean
+        - registerAllEffects(): void
+        - registerAllDrawTriggers(): void
+        - registerNOPEableEffect(cardType: CardType, baseEffect: CardEffect): void
+    }
+    
+    class CardFactory {
+        - effectFactory: CardEffectFactory
+        + CardFactory(effectFactory: CardEffectFactory)
+        + createCard(cardType: CardType): Card
+    }
+}
+
+package "User Input Abstraction" {
+    
+    interface UserInputProvider {
+        + promptForInteger(message: String, min: int, max: int): int
+        + promptForYesNo(message: String): boolean
+        + promptForCardIndex(player: Player, message: String): int
+        + promptForPlayerIndex(message: String, excludeCurrent: boolean): int
+        + promptForCardType(message: String): CardType
+        + displayMessage(message: String): void
+    }
+    
+    class ConsoleInputProvider {
+        - scanner: Scanner
+        - messages: ResourceBundle
+        + ConsoleInputProvider(scanner: Scanner, messages: ResourceBundle)
+        + promptForInteger(message: String, min: int, max: int): int
+        + promptForYesNo(message: String): boolean
+        + promptForCardIndex(player: Player, message: String): int
+        + promptForPlayerIndex(message: String, excludeCurrent: boolean): int
+        + promptForCardType(message: String): CardType
+        + displayMessage(message: String): void
+    }
+}
+
+' Relationships
+Card --> CardType
+Card --> CardEffect
+Card --> DrawTrigger
+
+CardEffect ..|> AbstractCardEffect
+AbstractCardEffect --|> ShuffleEffect
+AbstractCardEffect --|> SeeTheFutureEffect
+AbstractCardEffect --|> AlterTheFutureEffect
+AbstractCardEffect --|> AttackEffect
+AbstractCardEffect --|> SkipEffect
+AbstractCardEffect --|> ReverseEffect
+AbstractCardEffect --|> CatomicBombEffect
+AbstractCardEffect --|> NoEffect
+
+CardEffect ..|> NOPEInterceptor
+NOPEInterceptor --> CardEffect
+
+DrawTrigger ..|> ExplodingKittenTrigger
+DrawTrigger ..|> ImplodingKittenTrigger
+DrawTrigger ..|> NormalDrawTrigger
+DrawTrigger ..|> StreakingKittenTrigger
+
+ShuffleStrategy ..|> FisherYatesShuffle
+ShuffleStrategy ..|> RiffleShuffle
+ShuffleStrategy ..|> PileShuffle
+
+ShuffleEffect --> ShuffleStrategy
+
+ComboEffect ..|> TwoOfAKindCombo
+ComboEffect ..|> ThreeOfAKindCombo
+
+CardEffectFactory ..> CardEffect
+CardEffectFactory ..> DrawTrigger
+CardEffectFactory ..> NOPEInterceptor
+CardFactory ..> Card
+CardFactory --> CardEffectFactory
+
+CardEffect ..> EffectContext
+CardEffect ..> EffectResult
+DrawTrigger ..> EffectContext
+DrawTrigger ..> DrawResult
+
+UserInputProvider ..|> ConsoleInputProvider
+EffectContext --> UserInputProvider
+
+note right of NOPEInterceptor
+  Decorator Pattern: Wraps CardEffect
+  Maintains identical interface
+  Checks for NOPE before executing
+  Private shouldCancelDueToNOPE method
+  Implements Chain of Responsibility
+end note
+
+note right of CardEffectFactory
+  Factory decides which effects
+  need NOPEInterceptor wrapping
+  Cards affecting others: wrapped
+  Personal benefit cards: not wrapped
+end note
+
+note right of ShuffleEffect
+  Strategy Pattern for shuffle algorithms
+  Can inject different implementations
+end note
+
+@enduml
