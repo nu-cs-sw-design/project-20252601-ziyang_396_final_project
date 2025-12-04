@@ -34,85 +34,99 @@ This project is a console implementation of the Exploding Kittens card game and 
 ## 4. Complete User Story
 > *As a group of friends who want to play Exploding Kittens variants without the physical deck, we launch the console app, pick a shared language, and configure our preferred variant. Each player sits at the same terminal, announcing their inputs when prompted. On every turn we can see our hands (unless cursed), decide whether to play cards or combos, and negotiate reactions like NOPEs while the system enforces rules such as attack chains, reversed order, and bomb handling. We keep drawing and resolving cards until only one player survives, at which point the app announces the winner and we can restart if desired.*
 
-## 5. Concrete User Cases
+## 5. Concrete User Cases example 
 Each case lists actors, prerequisites, triggers, the main happy path, and notable alternate flows.
 
-### UC1 – Select Language
-- **Actors**: All players (shared console).
-- **Preconditions**: Application launched via `./gradlew run`.
-- **Trigger**: CLI displays the language menu.
-- **Flow**: Player enters `1` for English or `2` for Korean. `GameUI` loads the matching `ResourceBundle` so all later prompts use that locale.
-- **Alternates**: Invalid numerical input prints an error and re-prompts.
-- **Postcondition**: Localized strings ready for the remainder of the session.
+UC1: Start the System
+Actor: Store Staff
+Precondition: The guitar data is stored in some persistent storage.
+Basic Flow:
+1. The user starts the system.
+2. The system displays “Welcome to Rick’s Guitar Inventory!”
+3. The system displays the Main Screen, which contains the list of guitars in the inventory, and
+options to “Add a Guitar”, “Remove a Guitar”, “Search for Guitars”, “Generate Inventory
+Report”, and “System Backup”.
 
-### UC2 – Configure Game Variant
-- **Actors**: Same shared console operator.
-- **Preconditions**: Language chosen.
-- **Trigger**: Variant menu appears (`Exploding`, `Imploding`, `Streaking`).
-- **Flow**: User selects option 1–3. `Game.retrieveGameMode` validates and updates `Deck` composition (e.g., adds Imploding Kitten cards or Streaking-only actions).
-- **Alternates**: Selecting the current game type triggers the "must provide valid game type" exception, so `GameUI` warns and re-prompts.
-- **Postcondition**: Deck blueprint and max size configured.
+UC2: Add a Guitar
+Actor: Store Staff
+Precondition: The system is on the Main Screen.
+Basic Flow:
+1. User chooses to add a new guitar to the inventory.
+2. System prompts the user for the following information: serial number, price, builder, model,
+type of the guitar, type of back wood, and type of top wood.
+3. User provides all the required information.
+4. System checks if the serial number already exists in the inventory.
+5. If the serial number is unique, system adds the guitar to the inventory.
+6. System confirms the successful addition of the guitar.
+Exception Flow A:
+5.a If the serial number is not unique, system informs the user that the guitar cannot be added due to a
+duplicate serial number.
+6. Resume at Step 2.
+Exception Flow B:
+4.a If the user provides incomplete information, system prompts the user to complete all required fields.
+5. Resume at Step 2.
+Postcondition:
+A new guitar is added to the inventory, or the user is informed of the reason the guitar couldn't be
+added.
+Special Requirements:
+1. If the computer loses power while the program is running, the guitar data should remain as up
+to date as possible.
+2. All active Guitar Store applications must automatically update to reflect changes whenever a
+new guitar is added to the system.
 
-### UC3 – Set Player Count & Deal Opening Hands
-- **Actors**: Console operator + all players.
-- **Preconditions**: Variant chosen.
-- **Trigger**: Player-count prompt is shown.
-- **Flow**: Operator chooses 2, 3, or 4. Game injects that number, ensures limits, creates player hands, inserts bombs based on variant, shuffles, and deals five cards per player while showing turn order info.
-- **Alternates**: Invalid count prints localized error; input repeats.
-- **Postcondition**: All players have baseline hands plus Defuse cards.
 
-### UC4 – Execute a Standard Turn
-- **Actors**: Current player.
-- **Preconditions**: Game loop running, player alive.
-- **Trigger**: `GameUI.startTurn()` announces the hand and remaining actions.
-- **Flow**: Player may (a) play no card and choose to end turn, (b) play a single action card (e.g., Skip, Shuffle), or (c) initiate combos via `playSpecialCombo`. End turn draws from deck and may trigger bomb resolution.
-- **Alternates**: If a player is cursed, certain cards (Exploding/Streaking) auto-trigger penalties; invalid plays show warnings.
-- **Postcondition**: Control passes to next player based on turns remaining.
+UC3: Remove a Guitar
+Actor: Store Staff
+Precondition: The system is on the Main Screen.
+Basic Flow:
+1. User chooses to remove a guitar from the inventory.
+2. System prompts the user for the serial number of the guitar.
+3. User provides the serial number.
+4. System checks if the serial number exists in the inventory.
+5. If it does, the system removes the guitar from the inventory.
+6. System confirms the successful removal of the guitar to the user.
+Exception Flow:
+5.a If the serial number does not exist, system informs the user that the guitar cannot be removed
+because it does not exist in the inventory.
+Postcondition:
+A guitar is removed from the inventory, or the user is informed of the reason the guitar couldn't be
+removed.
+Special Requirements:
+1. If the computer loses power while the program is running, the guitar data should remain as up
+to date as possible.
+2. All active Guitar Store applications must automatically update to reflect changes whenever a
+new guitar is added to the system.
+UC4: Search for Guitars
+Actor: Store Staff
+Precondition: The system is on the Main Screen.
+Basic Flow:
+1. User chooses to search for a guitar in the inventory.
+2. System prompts the user to provide at least one of the following values: builder, model, type of
+the guitar, type of back wood, or type of top wood.
+3. User provides the desired search criteria.
+4. System searches the inventory for guitars that match all the provided criteria.
+5. System displays the guitars that match the searching criteria to the user.
+Alternate Flow:
+5.a If no guitars match the search criteria, system informs the user that no guitars match their search
+criteria.
+Postcondition:
+User views the search results or is informed if no matching guitars are found.
+Special Requirement:
+The search operation should be as fast as possible.
 
-### UC5 – Resolve Attacks and Targeted Attacks
-- **Actors**: Attacking player, targeted players.
-- **Preconditions**: At least one Attack or Targeted Attack card is played.
-- **Trigger**: Player selects Attack/Super Skip options.
-- **Flow**: Card is removed from hand, `startAttackFollowUp` begins; every affected player can chain further attacks or choose targets. The attack queue executes via `Game.startAttackPhase`, incrementing required future turns.
-- **Alternates**: Any player can interrupt with NOPE; targeted attacks can redirect to specific players.
-- **Postcondition**: Turn counters updated, attack queue emptied.
-
-### UC6 – Handle Bomb, Defuse, Imploding, and Streaking Interactions
-- **Actors**: Player drawing a bomb & other players (if effects ripple).
-- **Preconditions**: Player ends a turn and draws a card.
-- **Trigger**: Drawn card is Exploding Kitten or Imploding Kitten.
-- **Flow**: `GameUI.endTurn` detects bomb, checks for Streaking support or Defuse card. If Defuse exists, player chooses where to reinsert the bomb. Imploding cards flip once, then kill the player when drawn face-up.
-- **Alternates**: Streaking Kitten owners can optionally keep an Exploding card; lacking defenses kills the player immediately.
-- **Postcondition**: Player either survives (and adjusts deck) or is marked dead, possibly ending the game.
-
-### UC7 – Perform Special Combos (Two / Three of a Kind & Feral Cats)
-- **Actors**: Current player.
-- **Preconditions**: Player possesses duplicates or Feral Cats.
-- **Trigger**: Player chooses combo option during their turn.
-- **Flow**: `playSpecialCombo` asks for combo size, enforces card counts, supports mixing Feral Cats, and then executes the reward (steal selected card or specific target card type).
-- **Alternates**: Insufficient cards triggers localized warnings; cursed players who try invalid combos automatically discard and continue.
-- **Postcondition**: Targeted card theft resolves, used cards removed from hand.
-
-### UC8 – Apply Curse of the Cat Butt and Tracking Cursed Players
-- **Actors**: Player playing the curse; targeted player.
-- **Preconditions**: Card in hand, target alive and not the current player.
-- **Trigger**: Player selects the card from hand.
-- **Flow**: System prompts for target index, validates, marks them cursed (hand hidden, special discard behavior, forced shuffles upon garbage collection).
-- **Alternates**: Invalid target input re-prompts; if target dies, curse is irrelevant.
-- **Postcondition**: Target’s hand becomes hidden from everyone (including themselves) until curse is cleared.
-
-### UC9 – Run Garbage Collection & Deck Manipulation Utilities
-- **Actors**: Active player and all living players.
-- **Preconditions**: Garbage Collection, Alter the Future, See the Future, Swap Top/Bottom cards, or Draw-From-Bottom actions available.
-- **Trigger**: Player plays respective card.
-- **Flow**: `GameUI` walks through showing other hands (unless cursed), collecting discard choices, optionally letting players inspect or reorder top-of-deck cards, or drawing from the bottom.
-- **Alternates**: NOPE reactions cancel the effect; invalid indices re-prompt.
-- **Postcondition**: Deck state is updated, and play proceeds according to the card’s rule.
-
-## 6. Tips for Facilitators
-- Keep a single note-taker near the terminal to avoid accidental key presses.
-- Verbally announce every input so everyone can agree before confirming.
-- Encourage players to track their remaining turns when attack chains get deep; the UI shows `playerTurnsMessage` each time to help.
-- Re-run `./gradlew run` to start a new session after a winner is announced.
-
-This guide should give new contributors and play-testers enough structure to operate the console UI and understand how user-facing scenarios map to the underlying design.
+UC5: Update Guitar Information
+Actor: Store Staff
+Precondition: The system is on the Main Screen.
+Basic Flow:
+1. User selects a guitar.
+2. System displays the guitar information (price, builder, model, type, woods, etc.)
+3. User chooses to update the guitar information.
+4. The system prompts user to update one or more fields (price, builder, model, type, woods, etc.).
+5. User provides updated information.
+6. System updates the guitar details in the inventory.
+7. System confirms successful update.
+Exception Flow:
+4.a If the user enters any invalid data, the system displays a message to inform the user.
+5. Resume at Step 4.
+Postcondition:
+The guitar details are updated.
