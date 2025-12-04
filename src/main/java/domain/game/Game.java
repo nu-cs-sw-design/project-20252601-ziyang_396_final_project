@@ -333,6 +333,10 @@ public class Game {
 		return numberOfPlayers;
 	}
 
+	public Player[] getPlayersArray() {
+		return players;
+	}
+
 	public int checkNumberOfAlivePlayers() {
 		int counter = 0;
 		for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {

@@ -1,6 +1,7 @@
 package ui;
 
 import domain.game.*;
+import domain.game.effect.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,8 +16,15 @@ import java.nio.charset.StandardCharsets;
 public class GameUI {
 	private Game game;
 	private ResourceBundle messages;
+	private CardEffectFactory effectFactory;
+	private UserInputProvider inputProvider;
 
-	public GameUI (Game game) { this.game = game; }
+	public GameUI (Game game) {
+		this.game = game;
+		this.effectFactory = new CardEffectFactory();
+		Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8);
+		this.inputProvider = new ConsoleInputProvider(scanner);
+	}
 
 	public void chooseLanguage() {
 		Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8);
@@ -1251,7 +1259,9 @@ public class GameUI {
 		CardType[] inValidCards = {CardType.NOPE,
 				CardType.DEFUSE, CardType.EXPLODING_KITTEN,
 				CardType.STREAKING_KITTEN,
-				CardType.IMPLODING_KITTEN, CardType.FERAL_CAT};
+				CardType.IMPLODING_KITTEN, CardType.FERAL_CAT,
+				CardType.CAT_ONE, CardType.CAT_TWO,
+				CardType.CAT_THREE, CardType.CAT_FOUR};
 		for (CardType inValidCard : inValidCards) {
 			if (checkMatchingCardType(card.getCardType(), inValidCard)) {
 				return true;
@@ -1487,27 +1497,47 @@ public class GameUI {
 						continue;
 					}
 				}
-			} else {
-				player.removeCardFromHand(cardIndex);
+		} else {
+			player.removeCardFromHand(cardIndex);
+		}
+
+		if (checkIfDifferentCardType(cardType, CardType.EXPLODING_KITTEN)
+				&& checkIfDifferentCardType(cardType, CardType.DEFUSE)
+				&& !effectFactory.hasEffect(cardType)) {
+			if (checkAllPlayersNope()) {
+				continue;
 			}
-
-			if (checkIfDifferentCardType(cardType, CardType.EXPLODING_KITTEN)
-					&& checkIfDifferentCardType(cardType, CardType.DEFUSE)) {
-				if (checkAllPlayersNope()) {
-					continue;
-				}
-			} else if (specialCombo == twoCats || specialCombo == threeCats) {
-				if (checkAllPlayersNope()) {
-					continue;
-				}
+		} else if (specialCombo == twoCats || specialCombo == threeCats) {
+			if (checkAllPlayersNope()) {
+				continue;
 			}
-
-
+		}
 			if (specialCombo ==  twoCats) {
 				playSpecialComboTwoCards(cardType);
 				continue;
 			} else if (specialCombo == threeCats) {
 				playSpecialComboThreeCards(cardType);
+				continue;
+			}
+
+			if (effectFactory.hasEffect(cardType)) {
+				CardEffect effect = effectFactory.getEffect(cardType);
+				Player[] allPlayers = game.getPlayersArray();
+				Player currentPlayer = allPlayers[game.getPlayerTurn()];
+				EffectContext context = new EffectContext(
+						game, currentPlayer, allPlayers, inputProvider);
+				
+				EffectResult result = effect.execute(context);
+				System.out.println(result.getMessage());
+				
+				if (result.isCancelled()) {
+					continue;
+				}
+				
+				if (result.shouldEndTurn()) {
+					return;
+				}
+				
 				continue;
 			}
 
