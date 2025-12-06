@@ -8,15 +8,17 @@ public class EffectContext {
 	private final Game game;
 	private final Player currentPlayer;
 	private final Player[] allPlayers;
-	private final UserInputProvider userInput;
+	private final InputProvider input;
+	private final OutputProvider output;
 	private Player targetPlayer;
 
 	public EffectContext(Game game, Player currentPlayer, Player[] allPlayers,
-			UserInputProvider userInput) {
+			InputProvider input, OutputProvider output) {
 		this.game = game;
 		this.currentPlayer = currentPlayer;
 		this.allPlayers = allPlayers;
-		this.userInput = userInput;
+		this.input = input;
+		this.output = output;
 		this.targetPlayer = null;
 	}
 
@@ -36,8 +38,12 @@ public class EffectContext {
 		return game.getDeck();
 	}
 
-	public UserInputProvider getUserInput() {
-		return userInput;
+	public InputProvider getInput() {
+		return input;
+	}
+
+	public OutputProvider getOutput() {
+		return output;
 	}
 
 	public Player getTargetPlayer() {

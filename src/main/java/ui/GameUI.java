@@ -17,13 +17,15 @@ public class GameUI {
 	private Game game;
 	private ResourceBundle messages;
 	private CardEffectFactory effectFactory;
-	private UserInputProvider inputProvider;
+	private InputProvider inputProvider;
+	private OutputProvider outputProvider;
 
 	public GameUI (Game game) {
 		this.game = game;
 		this.effectFactory = new CardEffectFactory();
 		Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8);
-		this.inputProvider = new ConsoleInputProvider(scanner);
+		this.inputProvider = new ConsoleInput(scanner);
+		this.outputProvider = new ConsoleOutput();
 	}
 
 	public void chooseLanguage() {
@@ -1520,21 +1522,20 @@ public class GameUI {
 				continue;
 			}
 
-			if (effectFactory.hasEffect(cardType)) {
-				CardEffect effect = effectFactory.getEffect(cardType);
-				Player[] allPlayers = game.getPlayersArray();
-				Player currentPlayer = allPlayers[game.getPlayerTurn()];
-				EffectContext context = new EffectContext(
-						game, currentPlayer, allPlayers, inputProvider);
-				
-				EffectResult result = effect.execute(context);
-				System.out.println(result.getMessage());
-				
-				if (result.isCancelled()) {
-					continue;
-				}
-				
-				if (result.shouldEndTurn()) {
+		if (effectFactory.hasEffect(cardType)) {
+			CardEffect effect = effectFactory.getEffect(cardType);
+			Player[] allPlayers = game.getPlayersArray();
+			Player currentPlayer = allPlayers[game.getPlayerTurn()];
+			EffectContext context = new EffectContext(
+				game, currentPlayer, allPlayers,
+				inputProvider, outputProvider);
+		
+		EffectResult result = effect.execute(context);
+		System.out.println(result.getMessage());
+		
+		if (result.isCancelled()) {
+			continue;
+		}				if (result.shouldEndTurn()) {
 					return;
 				}
 				

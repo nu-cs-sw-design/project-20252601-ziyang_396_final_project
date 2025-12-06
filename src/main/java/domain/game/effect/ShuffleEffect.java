@@ -18,7 +18,8 @@ public class ShuffleEffect implements CardEffect {
 			return EffectResult.failed("Cannot shuffle an empty deck");
 		}
 
-		int shuffleCount = context.getUserInput().promptForShuffleCount();
+		ConsoleInput consoleInput = (ConsoleInput) context.getInput();
+		int shuffleCount = consoleInput.promptForShuffleCount();
 		for (int i = 0; i < shuffleCount; i++) {
 			strategy.shuffle(context.getDeck());
 		}

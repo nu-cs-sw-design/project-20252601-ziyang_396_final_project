@@ -37,15 +37,17 @@ package "Domain Layer" {
     class EffectContext {
         - game: Game
         - currentPlayer: Player
-        - targetPlayer: Player
-        - userInput: UserInputProvider
+        - allPlayers: Player[]
+        - input: InputProvider
+        - output: OutputProvider
         - deck: Deck
-        + EffectContext(game: Game, currentPlayer: Player, userInput: UserInputProvider)
-        + setTargetPlayer(player: Player): void
+        + EffectContext(game: Game, currentPlayer: Player, allPlayers: Player[], input: InputProvider, output: OutputProvider)
         + getGame(): Game
         + getCurrentPlayer(): Player
+        + getAllPlayers(): Player[]
         + getDeck(): Deck
-        + getUserInput(): UserInputProvider
+        + getInput(): InputProvider
+        + getOutput(): OutputProvider
     }
     
     class EffectResult {
@@ -234,27 +236,26 @@ package "Factory Pattern" {
     }
 }
 
-package "User Input Abstraction" {
+package "Input/Output Abstraction" {
     
-    interface UserInputProvider {
-        + promptForInteger(message: String, min: int, max: int): int
-        + promptForYesNo(message: String): boolean
-        + promptForCardIndex(player: Player, message: String): int
-        + promptForPlayerIndex(message: String, excludeCurrent: boolean): int
-        + promptForCardType(message: String): CardType
-        + displayMessage(message: String): void
+    interface InputProvider {
+        + readInteger(min: int, max: int): int
+        + readYesNo(): boolean
     }
     
-    class ConsoleInputProvider {
+    interface OutputProvider {
+        + display(message: String): void
+    }
+    
+    class ConsoleInput {
         - scanner: Scanner
-        - messages: ResourceBundle
-        + ConsoleInputProvider(scanner: Scanner, messages: ResourceBundle)
-        + promptForInteger(message: String, min: int, max: int): int
-        + promptForYesNo(message: String): boolean
-        + promptForCardIndex(player: Player, message: String): int
-        + promptForPlayerIndex(message: String, excludeCurrent: boolean): int
-        + promptForCardType(message: String): CardType
-        + displayMessage(message: String): void
+        + ConsoleInput(scanner: Scanner)
+        + readInteger(min: int, max: int): int
+        + readYesNo(): boolean
+    }
+    
+    class ConsoleOutput {
+        + display(message: String): void
     }
 }
 
@@ -301,8 +302,10 @@ CardEffect ..> EffectResult
 DrawTrigger ..> EffectContext
 DrawTrigger ..> DrawResult
 
-UserInputProvider ..|> ConsoleInputProvider
-EffectContext --> UserInputProvider
+InputProvider <|.. ConsoleInput
+OutputProvider <|.. ConsoleOutput
+EffectContext --> InputProvider
+EffectContext --> OutputProvider
 
 note right of NOPEInterceptor
   Decorator Pattern: Wraps CardEffect

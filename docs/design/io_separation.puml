@@ -1,0 +1,92 @@
+@startuml io_separation
+
+title Input/Output Separation - Improved Design
+
+package "UI Abstraction" {
+    interface InputProvider {
+        + readInteger(min: int, max: int): int
+        + readYesNo(): boolean
+    }
+    
+    interface OutputProvider {
+        + display(message: String): void
+    }
+    
+    class ConsoleInput implements InputProvider {
+        - scanner: Scanner
+        + readInteger(min: int, max: int): int
+        + readYesNo(): boolean
+    }
+    
+    class ConsoleOutput implements OutputProvider {
+        + display(message: String): void
+    }
+}
+
+package "Effect Context" {
+    class EffectContext {
+        - game: Game
+        - currentPlayer: Player
+        - allPlayers: Player[]
+        - input: InputProvider
+        - output: OutputProvider
+        + getInput(): InputProvider
+        + getOutput(): OutputProvider
+    }
+}
+
+package "Card Effects" {
+    interface CardEffect {
+        + execute(context: EffectContext): EffectResult
+    }
+    
+    class ShuffleEffect implements CardEffect {
+        + execute(context: EffectContext): EffectResult
+    }
+    
+    class SeeTheFutureEffect implements CardEffect {
+        + execute(context: EffectContext): EffectResult
+    }
+    
+    class NOPEInterceptor implements CardEffect {
+        - wrappedEffect: CardEffect
+        + execute(context: EffectContext): EffectResult
+    }
+}
+
+package "UI Layer" {
+    class GameUI {
+        - game: Game
+        - effectFactory: CardEffectFactory
+        - input: InputProvider
+        - output: OutputProvider
+        + startTurn(): void
+    }
+}
+
+EffectContext --> InputProvider
+EffectContext --> OutputProvider
+CardEffect --> EffectContext : uses
+GameUI --> InputProvider : creates
+GameUI --> OutputProvider : creates
+GameUI --> EffectContext : creates
+
+note right of InputProvider
+  Pure input - no display logic
+  Only reads and validates
+  Easy to mock for testing
+end note
+
+note right of OutputProvider
+  Pure output - no input logic
+  Only displays messages
+  Easy to mock for testing
+end note
+
+note bottom of EffectContext
+  Context object bundles both
+  input and output providers
+  Passed to all card effects
+end note
+
+@enduml

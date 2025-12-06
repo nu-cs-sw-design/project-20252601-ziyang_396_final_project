@@ -53,18 +53,18 @@ public class NOPEInterceptor implements CardEffect {
 
 			final String hasNopeMsg = "Player " + player.getPlayerID()
 					+ " has a NOPE card!";
-			context.getUserInput().displayMessage(hasNopeMsg);
+			context.getOutput().display(hasNopeMsg);
 			
 			final String playNopePrompt = "Player " + player.getPlayerID()
 					+ ", do you want to play NOPE?";
-			boolean wantsToNope = context.getUserInput()
-					.promptForYesNo(playNopePrompt);
+			boolean wantsToNope = context.getInput()
+					.readYesNo(playNopePrompt);
 
 			if (wantsToNope) {
 				player.removeCardFromHand(nopeIndex);
 				final String playedNopeMsg = "Player " + player.getPlayerID()
 						+ " played NOPE!";
-				context.getUserInput().displayMessage(playedNopeMsg);
+				context.getOutput().display(playedNopeMsg);
 				cancelled = !cancelled;
 				
 				boolean nopeOfNope = checkForNOPE(context);

@@ -28,7 +28,7 @@ public class ExplodingKittenTrigger implements DrawTrigger {
 
 		final String defuseMsg = "You drew an Exploding Kitten but you have "
 				+ "a Defuse card!";
-		context.getUserInput().displayMessage(defuseMsg);
+		context.getOutput().display(defuseMsg);
 		
 		// Remove defuse from hand
 		context.getCurrentPlayer().removeCardFromHand(defuseIndex);
@@ -37,7 +37,7 @@ public class ExplodingKittenTrigger implements DrawTrigger {
 		final String positionPrompt = "Where do you want to place the "
 				+ "Exploding Kitten? (0 = top, "
 				+ context.getDeck().getDeckSize() + " = bottom)";
-		int position = context.getUserInput().promptForInteger(
+		int position = context.getInput().readInteger(
 			positionPrompt,
 			0,
 			context.getDeck().getDeckSize()
