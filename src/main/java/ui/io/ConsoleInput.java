@@ -1,10 +1,8 @@
-package domain.game.effect;
+package ui.io;
 
 import java.util.Scanner;
 
 public class ConsoleInput implements InputProvider {
-	private static final int MIN_SHUFFLE_COUNT = 1;
-	private static final int MAX_SHUFFLE_COUNT = 100;
 	private final Scanner scanner;
 
 	public ConsoleInput(Scanner scanner) {
@@ -13,7 +11,9 @@ public class ConsoleInput implements InputProvider {
 
 	@Override
 	public int readInteger(String message, int min, int max) {
-		System.out.println(message);
+		if (message != null && !message.isEmpty()) {
+			System.out.println(message);
+		}
 		while (true) {
 			try {
 				int value = Integer.parseInt(scanner.nextLine());
@@ -41,11 +41,5 @@ public class ConsoleInput implements InputProvider {
 			}
 			System.out.println("Please enter 'yes' or 'no'");
 		}
-	}
-
-	public int promptForShuffleCount() {
-		final String prompt = "How many times to shuffle? ("
-				+ MIN_SHUFFLE_COUNT + "-" + MAX_SHUFFLE_COUNT + ")";
-		return readInteger(prompt, MIN_SHUFFLE_COUNT, MAX_SHUFFLE_COUNT);
 	}
 }

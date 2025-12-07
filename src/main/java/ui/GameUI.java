@@ -2,6 +2,10 @@ package ui;
 
 import domain.game.*;
 import domain.game.effect.*;
+import ui.io.ConsoleInput;
+import ui.io.ConsoleOutput;
+import ui.io.InputProvider;
+import ui.io.OutputProvider;
 
 import java.util.ArrayList;
 import java.util.Arrays;

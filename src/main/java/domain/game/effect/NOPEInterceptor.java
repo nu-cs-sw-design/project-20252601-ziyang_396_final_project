@@ -24,8 +24,8 @@ public class NOPEInterceptor implements CardEffect {
 			return wrappedEffect.execute(context);
 		}
 
-		// Check for NOPE cards from all players
-		boolean cancelled = checkForNOPE(context);
+		// Check for NOPE cards from all players except the one who played the card
+		boolean cancelled = checkForNOPE(context, context.getCurrentPlayer());
 
 		if (cancelled) {
 			return EffectResult.cancelled("The effect was cancelled by a NOPE card");
@@ -34,14 +34,13 @@ public class NOPEInterceptor implements CardEffect {
 		return wrappedEffect.execute(context);
 	}
 
-	private boolean checkForNOPE(EffectContext context) {
+	private boolean checkForNOPE(EffectContext context, Player playedByPlayer) {
 		Player[] players = context.getAllPlayers();
-		Player currentPlayer = context.getCurrentPlayer();
 		boolean cancelled = false;
 
-		// Ask each other player if they want to play NOPE
+		// Ask each player if they want to play NOPE (except the one who played the card)
 		for (Player player : players) {
-			if (player == currentPlayer || player.getIsDead()) {
+			if (player == playedByPlayer || player.getIsDead()) {
 				continue;
 			}
 
@@ -52,25 +51,39 @@ public class NOPEInterceptor implements CardEffect {
 			}
 
 			final String hasNopeMsg = "Player " + player.getPlayerID()
-					+ " has a NOPE card!";
+					+ " has a Nope Card.";
 			context.getOutput().display(hasNopeMsg);
 			
-			final String playNopePrompt = "Player " + player.getPlayerID()
-					+ ", do you want to play NOPE?";
-			boolean wantsToNope = context.getInput()
-					.readYesNo(playNopePrompt);
+			final String playNopePrompt = "Would you like to play it?";
+			context.getOutput().display(playNopePrompt);
+			
+			final int minChoice = 1;
+			final int maxChoice = 2;
+			context.getOutput().display("1. Yes");
+			context.getOutput().display("2. No");
+			
+			int choice = context.getInput().readInteger("", minChoice, maxChoice);
 
-			if (wantsToNope) {
+			if (choice == 1) {
+				final String decidedMsg = "Player " + player.getPlayerID()
+						+ " decided to play a Nope Card.";
+				context.getOutput().display(decidedMsg);
+				
 				player.removeCardFromHand(nopeIndex);
+				
 				final String playedNopeMsg = "Player " + player.getPlayerID()
-						+ " played NOPE!";
+						+ " successfully played a Nope Card.";
 				context.getOutput().display(playedNopeMsg);
 				cancelled = !cancelled;
 				
-				boolean nopeOfNope = checkForNOPE(context);
+				boolean nopeOfNope = checkForNOPE(context, player);
 				if (nopeOfNope) {
 					cancelled = !cancelled;
 				}
+			} else {
+				final String didNotPlayMsg = "Player " + player.getPlayerID()
+						+ " did not play a Nope Card.";
+				context.getOutput().display(didNotPlayMsg);
 			}
 		}
 

@@ -40,7 +40,7 @@ package "Domain Layer" {
         - allPlayers: Player[]
         - input: InputProvider
         - output: OutputProvider
-        - deck: Deck
+        - targetPlayer: Player
         + EffectContext(game: Game, currentPlayer: Player, allPlayers: Player[], input: InputProvider, output: OutputProvider)
         + getGame(): Game
         + getCurrentPlayer(): Player
@@ -48,6 +48,8 @@ package "Domain Layer" {
         + getDeck(): Deck
         + getInput(): InputProvider
         + getOutput(): OutputProvider
+        + getTargetPlayer(): Player
+        + setTargetPlayer(player: Player): void
     }
     
     class EffectResult {
@@ -80,13 +82,6 @@ package "Card Effect Strategies" {
     
     interface DrawTrigger {
         + onDraw(context: EffectContext): DrawResult
-    }
-    
-    abstract class AbstractCardEffect {
-        # validateContext(context: EffectContext): boolean
-        # createResult(success: boolean, endsTurn: boolean, message: String): EffectResult
-        + execute(context: EffectContext): EffectResult
-        + canExecute(context: EffectContext): boolean
     }
     
     class ShuffleEffect {
@@ -141,10 +136,12 @@ package "Card Effect Strategies" {
     
     class NOPEInterceptor {
         - wrappedEffect: CardEffect
-        + NOPEInterceptor(wrappedEffect: CardEffect)
+        - requiresNOPECheck: boolean
+        + NOPEInterceptor(wrappedEffect: CardEffect, requiresNOPECheck: boolean)
         + execute(context: EffectContext): EffectResult
         + canExecute(context: EffectContext): boolean
-        - shouldCancelDueToNOPE(context: EffectContext): boolean
+        - checkForNOPE(context: EffectContext, playedByPlayer: Player): boolean
+        - findNOPECard(player: Player): int
     }
 }
 
@@ -170,21 +167,21 @@ package "Draw Triggers" {
 package "Shuffle Strategies" {
     
     interface ShuffleStrategy {
-        + shuffle(deck: List<Card>, random: Random): void
+        + shuffle(deck: Deck): void
     }
     
     class FisherYatesShuffle {
-        + shuffle(deck: List<Card>, random: Random): void
+        + shuffle(deck: Deck): void
     }
     
     class RiffleShuffle {
-        + shuffle(deck: List<Card>, random: Random): void
+        + shuffle(deck: Deck): void
     }
     
     class PileShuffle {
         - numberOfPiles: int
         + PileShuffle(numberOfPiles: int)
-        + shuffle(deck: List<Card>, random: Random): void
+        + shuffle(deck: Deck): void
     }
 }
 
@@ -218,15 +215,13 @@ package "Factory Pattern" {
     
     class CardEffectFactory {
         - effectRegistry: Map<CardType, CardEffect>
-        - drawTriggerRegistry: Map<CardType, DrawTrigger>
-        - defaultShuffleStrategy: ShuffleStrategy
+        - shuffleStrategy: ShuffleStrategy
         + CardEffectFactory()
-        + createCardEffect(cardType: CardType): CardEffect
-        + createDrawTrigger(cardType: CardType): DrawTrigger
-        + canBeNOPEd(cardType: CardType): boolean
-        - registerAllEffects(): void
-        - registerAllDrawTriggers(): void
-        - registerNOPEableEffect(cardType: CardType, baseEffect: CardEffect): void
+        + getEffect(cardType: CardType): CardEffect
+        + getTrigger(cardType: CardType): DrawTrigger
+        + hasEffect(cardType: CardType): boolean
+        + hasTrigger(cardType: CardType): boolean
+        - registerEffects(): void
     }
     
     class CardFactory {
@@ -236,11 +231,11 @@ package "Factory Pattern" {
     }
 }
 
-package "Input/Output Abstraction" {
+package "UI Layer - Input/Output" {
     
     interface InputProvider {
-        + readInteger(min: int, max: int): int
-        + readYesNo(): boolean
+        + readInteger(message: String, min: int, max: int): int
+        + readYesNo(message: String): boolean
     }
     
     interface OutputProvider {
@@ -250,8 +245,8 @@ package "Input/Output Abstraction" {
     class ConsoleInput {
         - scanner: Scanner
         + ConsoleInput(scanner: Scanner)
-        + readInteger(min: int, max: int): int
-        + readYesNo(): boolean
+        + readInteger(message: String, min: int, max: int): int
+        + readYesNo(message: String): boolean
     }
     
     class ConsoleOutput {
@@ -259,53 +254,58 @@ package "Input/Output Abstraction" {
     }
 }
 
-' Relationships
+
+' Card Effect Hierarchy
+CardEffect ..> EffectContext
+CardEffect ..> EffectResult
+CardEffect <|.. ShuffleEffect
+CardEffect <|.. SeeTheFutureEffect
+CardEffect <|.. AlterTheFutureEffect
+CardEffect <|.. AttackEffect
+CardEffect <|.. SkipEffect
+CardEffect <|.. ReverseEffect
+CardEffect <|.. CatomicBombEffect
+CardEffect <|.. NoEffect
+CardEffect <|.. NOPEInterceptor
+NOPEInterceptor --> CardEffect
+
+' Draw Trigger Hierarchy
+DrawTrigger ..> EffectContext
+DrawTrigger ..> DrawResult
+DrawTrigger <|.. ExplodingKittenTrigger
+DrawTrigger <|.. ImplodingKittenTrigger
+DrawTrigger <|.. NormalDrawTrigger
+DrawTrigger <|.. StreakingKittenTrigger
+
+' Shuffle Strategy Hierarchy
+ShuffleStrategy <|.. FisherYatesShuffle
+ShuffleStrategy <|.. RiffleShuffle
+ShuffleStrategy <|.. PileShuffle
+ShuffleEffect --> ShuffleStrategy
+
+' Combo Effect Hierarchy
+ComboEffect <|.. TwoOfAKindCombo
+ComboEffect <|.. ThreeOfAKindCombo
+TwoOfAKindCombo ..> ComboValidator
+ThreeOfAKindCombo ..> ComboValidator
+
+' Input/Output Layer Hierarchy (ui/io package)
+InputProvider <|.. ConsoleInput
+OutputProvider <|.. ConsoleOutput
+EffectContext --> InputProvider
+EffectContext --> OutputProvider
+
+' Card Relationships
 Card --> CardType
 Card --> CardEffect
 Card --> DrawTrigger
 
-CardEffect ..|> AbstractCardEffect
-AbstractCardEffect --|> ShuffleEffect
-AbstractCardEffect --|> SeeTheFutureEffect
-AbstractCardEffect --|> AlterTheFutureEffect
-AbstractCardEffect --|> AttackEffect
-AbstractCardEffect --|> SkipEffect
-AbstractCardEffect --|> ReverseEffect
-AbstractCardEffect --|> CatomicBombEffect
-AbstractCardEffect --|> NoEffect
-
-CardEffect ..|> NOPEInterceptor
-NOPEInterceptor --> CardEffect
-
-DrawTrigger ..|> ExplodingKittenTrigger
-DrawTrigger ..|> ImplodingKittenTrigger
-DrawTrigger ..|> NormalDrawTrigger
-DrawTrigger ..|> StreakingKittenTrigger
-
-ShuffleStrategy ..|> FisherYatesShuffle
-ShuffleStrategy ..|> RiffleShuffle
-ShuffleStrategy ..|> PileShuffle
-
-ShuffleEffect --> ShuffleStrategy
-
-ComboEffect ..|> TwoOfAKindCombo
-ComboEffect ..|> ThreeOfAKindCombo
-
+' Factory Relationships
 CardEffectFactory ..> CardEffect
 CardEffectFactory ..> DrawTrigger
 CardEffectFactory ..> NOPEInterceptor
 CardFactory ..> Card
 CardFactory --> CardEffectFactory
-
-CardEffect ..> EffectContext
-CardEffect ..> EffectResult
-DrawTrigger ..> EffectContext
-DrawTrigger ..> DrawResult
-
-InputProvider <|.. ConsoleInput
-OutputProvider <|.. ConsoleOutput
-EffectContext --> InputProvider
-EffectContext --> OutputProvider
 
 note right of NOPEInterceptor
   Decorator Pattern: Wraps CardEffect
@@ -322,9 +322,5 @@ note right of CardEffectFactory
   Personal benefit cards: not wrapped
 end note
 
-note right of ShuffleEffect
-  Strategy Pattern for shuffle algorithms
-  Can inject different implementations
-end note
 
 @enduml

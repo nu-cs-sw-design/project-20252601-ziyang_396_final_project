@@ -3,6 +3,8 @@ package domain.game.effect;
 import domain.game.Game;
 import domain.game.Player;
 import domain.game.Deck;
+import ui.io.InputProvider;
+import ui.io.OutputProvider;
 
 public class EffectContext {
 	private final Game game;

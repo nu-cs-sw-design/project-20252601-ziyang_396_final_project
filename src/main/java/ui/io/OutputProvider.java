@@ -1,4 +1,4 @@
-package domain.game.effect;
+package ui.io;
 
 public interface OutputProvider {
 

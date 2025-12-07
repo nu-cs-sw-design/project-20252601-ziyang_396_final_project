@@ -154,45 +154,49 @@
 ---
 
 ## UC4: Play NOPE Card
-**Actor:** Any player have NOPE card except the one who played the last card/effect
+**Actor:** Any player with NOPE card (except the one who played the card being NOPEd)
 
 **Precondition:**
 - Game is in progress 
 - Another player has just played a NOPEable card (SHUFFLE, SEE_THE_FUTURE, ATTACK, etc.)
 - Current reacting player has at least one NOPE card in hand
 - Current reacting player is not the one who played the card being NOPEd
-- Current reacting player did not play the previous NOPE in the chain
 
-**Trigger:** System prompts player to decide whether to play NOPE
 
 **Basic Flow:**
-1. Another player plays a NOPEable card effect
-2. System identifies all players with NOPE cards (excluding card player)
-3. For each eligible player in turn order:
-   - System displays: "Player X has a NOPE card"
-   - System prompts: "Player X, play NOPE to cancel [EFFECT]? (1=Yes, 2=No)"
+1. A player plays a NOPEable card effect
+2. System identifies all players with NOPE cards (excluding the player who played the card)
+3. For each eligible player in sequential order:
+   - System displays: "Player X has a Nope Card."
+   - System displays: "Would you like to play it?"
+   - System displays: "1. Yes"
+   - System displays: "2. No"
    - Player responds with 1 (Yes) or 2 (No)
-4. If player chooses Yes (plays NOPE):
+4. If player chooses 1 (Yes - plays NOPE):
+   - System displays: "Player X decided to play a Nope Card."
    - System removes NOPE card from player's hand
-   - System displays: "Player X played NOPE!"
-   - System increments NOPE counter
-   - System marks this player as last NOPE player
-   - Resume at Step 2 (check remaining players for NOPE of NOPE)
-5. If player chooses No:
-   - System displays: "Player X did not play NOPE"
+   - System displays: "Player X successfully played a Nope Card."
+   - System toggles the effect cancellation state
+   - System checks all players again for NOPE of NOPE (excluding the player who just played NOPE)
+   - Resume at Step 2 with new excluded player
+5. If player chooses 2 (No):
+   - System displays: "Player X did not play a Nope Card."
    - Continue to next player with NOPE card
-6. When all players have responded:
-   - If NOPE counter is odd: Original effect is CANCELLED
-   - If NOPE counter is even (including 0): Original effect EXECUTES
+6. When all eligible players have responded:
+   - If effect is in cancelled state: Original effect is CANCELLED
+   - If effect is not cancelled: Original effect EXECUTES
 
-**Alternate Flow A (NOPE a NOPE):**
-- 3.a System prompt changes to: "Player X, NOPE the NOPE? (1=Yes, 2=No)"
-- Same flow continues (can chain indefinitely)
+**Alternate Flow A (NOPE Chain):**
+- 4.a When a NOPE is played, system recursively checks for NOPE of NOPE
+- 4.b The player who just played NOPE is now excluded from the next check
+- 4.c All other players (including the original card player) can now NOPE the NOPE
+- 4.d Each NOPE toggles the cancellation state (true ↔ false)
+- Chain can continue indefinitely until no one plays NOPE
 
-**Alternate Flow B (Multiple NOPEs):**
+**Alternate Flow B (Multiple NOPEs in Chain):**
 - Multiple players may play NOPE in sequence
-- Each NOPE negates the previous action
-- Final result depends on odd/even count
+- Each NOPE negates the previous state
+- Final result: cancelled if odd number of total NOPEs, executes if even number
 
 **Exception Flow A (Player Has No NOPE):**
 - 3.a Player is skipped in NOPE checking loop
@@ -201,12 +205,13 @@
 **Exception Flow B (Invalid Input):**
 - 3.a If player enters invalid input (not 1 or 2)
 - 3.b System displays: "Invalid choice. Please enter 1 or 2."
-- Resume at Step 3
+- Resume at Step 3 for same player
 
 **Postcondition:**
-- NOPE card(s) removed from player(s) hands
-- Original effect either cancelled (odd NOPEs) or executes (even NOPEs)
+- NOPE card(s) removed from player(s) hands who played NOPE
+- Original effect either cancelled (odd total NOPEs) or executes (even total NOPEs including 0)
 - Game continues with original card player's turn
+
 
 ---
 
